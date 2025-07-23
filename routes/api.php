@@ -1,97 +1,60 @@
 <?php
 
-// File: routes/api.php
-
-use Illuminate\Http\Request;
-use App\Http\Controllers\Api\UserProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\IkanController;
-use App\Http\Controllers\Api\PesananApiController;
+use App\Http\Controllers\Api\ProdukController;
+use App\Http\Controllers\Api\KategoriProdukController;
+use App\Http\Controllers\Api\PengaturanTampilanController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\KeranjangController;
-use App\Http\Controllers\Api\PaymentProofController; // <-- TAMBAHKAN IMPORT INI
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\WilayahController;
+use App\Http\Controllers\Api\UserProfileController;
+use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\ShippingController;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-| This is where you can register API routes for your application.
-| These routes are loaded by the RouteServiceProvider and all of them
-| will be assigned to the "api" middleware group. Make something great!
-|
-*/
+Route::get('produks', [ProdukController::class, 'index']);
+Route::get('produks/{id}', [ProdukController::class, 'show']);
+Route::get('kategoris', [KategoriProdukController::class, 'index']);
+Route::get('banners', [PengaturanTampilanController::class, 'index']);
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
+Route::middleware('auth:api')->get('me', [AuthController::class, 'me']);
+Route::middleware('auth:api')->get('my-orders', [OrderController::class, 'myOrders']);
+Route::middleware('auth:api')->get('cart', [OrderController::class, 'cart']);
+Route::middleware('auth:api')->post('cart', [OrderController::class, 'storeCart']);
+Route::middleware('auth:api')->patch('cart/{item}', [OrderController::class, 'updateCartItem']);
+Route::middleware('auth:api')->delete('cart/{item}', [OrderController::class, 'deleteCartItem']);
+Route::middleware('auth:api')->get('addresses', [AddressController::class, 'index']);
+Route::middleware('auth:api')->post('addresses', [AddressController::class, 'store']);
+Route::middleware('auth:api')->put('addresses/{id}', [AddressController::class, 'update']);
+Route::middleware('auth:api')->delete('addresses/{id}', [AddressController::class, 'destroy']);
+Route::middleware('auth:api')->post('checkout', [OrderController::class, 'checkout']);
+Route::middleware('auth:api')->get('order-detail/{orderId}', [OrderController::class, 'orderDetail']);
+Route::middleware('auth:api')->get('profile-detail', [UserProfileController::class, 'show']);
+Route::middleware('auth:api')->post('profile-detail', [UserProfileController::class, 'update']);
 
-// == API Endpoints Katalog Ikan (Publik) ==
+// Shipping API
+Route::middleware('auth:api')->post('shipping/calculate', [ShippingController::class, 'calculateShipping']);
+Route::middleware('auth:api')->get('shipping/couriers', [ShippingController::class, 'getCouriers']);
+Route::middleware('auth:api')->post('shipping/update-cart', [ShippingController::class, 'updateCartShipping']);
 
-// Endpoint untuk mendapatkan daftar kategori ikan
-Route::get('/kategori', [IkanController::class, 'daftarKategori'])->name('api.kategori.index');
+Route::get('provinces', [WilayahController::class, 'provinces']);
+Route::get('regencies', [WilayahController::class, 'regencies']);
+Route::get('districts', [WilayahController::class, 'districts']);
 
-// Endpoint untuk mendapatkan daftar ikan
-Route::get('/ikan', [IkanController::class, 'index'])->name('api.ikan.index');
+// Midtrans Webhook Notification
+Route::post('midtrans/notification', [WebhookController::class, 'handle']);
 
-// Endpoint untuk mendapatkan informasi ikan berdasarkan slug
-Route::get('/ikan/{ikan:slug}', [IkanController::class, 'show'])->name('api.ikan.show');
-
-
-// == API Endpoints Otentikasi (Publik) ==
-
-// Endpoint untuk melakukan registrasi pengguna
-Route::post('/register', [AuthController::class, 'register'])->name('api.register');
-
-// Endpoint untuk login dan mendapatkan token autentikasi
-Route::post('/login', [AuthController::class, 'login'])->name('api.login');
-
-
-// == API Endpoints yang Memerlukan Otentikasi (Sanctum Token) ==
-
-// Semua endpoint yang memerlukan otentikasi berada di dalam grup ini
-Route::middleware('auth:sanctum')->group(function () {
-
-    // Endpoint untuk melakukan logout dan menghapus token
-    Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
-
-    // Endpoint untuk mendapatkan data pengguna yang sedang login
-    Route::get('/user', [AuthController::class, 'user'])->name('api.user');
-
-    // Endpoint untuk membuat pesanan baru
-    // Route::get('/pesanan', [PesananApiController::class, 'store'])->name('api.pesanan.store');
-    Route::get('/pesanan', [PesananApiController::class, 'index'])->name('api.pesanan.index');
-    Route::get('/pesanan/{pesanan}', [PesananApiController::class, 'show'])->name('api.pesanan.show');
-    Route::post('/pesanan', [PesananApiController::class, 'store'])->name('api.pesanan.store');
-    Route::put('/pesanan/{pesanan}', [PesananApiController::class, 'update'])->name('api.pesanan.update'); // Atau PATCH
-    Route::delete('/pesanan/{pesanan}', [PesananApiController::class, 'destroy'])->name('api.pesanan.destroy');
-    // === TAMBAHAN ROUTE UNTUK SUBMIT BUKTI PEMBAYARAN ===
-    // Parameter {pesanan} akan di-resolve menjadi instance model Pesanan (Route Model Binding)
-    Route::post('/pesanan/{pesanan}/submit-payment-proof', [PaymentProofController::class, 'submitProof'])
-        ->name('api.pesanan.submitProof');
-    // =====================================================
-    Route::put('/pesanan/{pesanan}/tandai-selesai', [PesananApiController::class, 'tandaiSelesai'])->name('api.pesanan.tandaiSelesai');
-    //untuk mengelola pesanan:
-    // Route::get('/pesanan', [PesananApiController::class, 'index'])->name('api.pesanan.index');
-    // Route::get('/pesanan/{pesanan}', [PesananApiController::class, 'show'])->name('api.pesanan.show');
-    // Route::put('/pesanan/{pesanan}', [PesananApiController::class, 'update'])->name('api.pesanan.update');
-    // Route::delete('/pesanan/{pesanan}', [PesananApiController::class, 'destroy'])->name('api.pesanan.destroy');
-
-    // Letakkan endpoint API lain yang memerlukan user login di dalam grup ini
-    Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
-    Route::post('/keranjang', [KeranjangController::class, 'store'])->name('keranjang.store');
-    // Nama parameter {keranjangItem} harus cocok dengan variabel $keranjangItem di controller
-    Route::put('/keranjang/{keranjangItem}', [KeranjangController::class, 'update'])->name('keranjang.update');
-    Route::delete('/keranjang/{keranjangItem}', [KeranjangController::class, 'destroy'])->name('keranjang.destroy');
-
-    // Endpoint untuk update foto profil pengguna
-    Route::post('/user/profile-photo', [UserProfileController::class, 'updateProfilePhoto'])->name('user.photo.update');
-    // Tambahkan route untuk menghapus foto jika perlu
-    // Route::delete('/user/profile-photo', [UserProfileController::class, 'deleteProfilePhoto'])->name('user.photo.delete');
+// CORS Test Route
+Route::get('cors-test', function () {
+    return response()->json([
+        'message' => 'CORS is working!',
+        'timestamp' => now(),
+        'origin' => request()->header('Origin')
+    ]);
 });
 
-// Route fallback jika endpoint API tidak ditemukan (opsional)
-// Jika endpoint yang diminta tidak ada, akan memberikan respons error 404
-Route::fallback(function () {
-    return response()->json(['message' => 'Endpoint tidak ditemukan.'], 404);
-});
-
-// Catatan: Anda memiliki dua blok Route::middleware('auth:sanctum')->group(...).
-// Biasanya, cukup satu grup utama untuk semua route terotentikasi API.
-// Namun, saya telah menambahkan route baru ke grup pertama yang lebih besar sesuai struktur Anda.
-// Jika /user/profile-photo juga merupakan bagian dari API utama, Anda bisa memindahkannya ke grup pertama.
+// Fallback OPTIONS route for CORS preflight
+Route::options('/{any}', function () {
+    return response()->json(['status' => 'ok']);
+})->where('any', '.*');

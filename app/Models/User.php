@@ -1,120 +1,115 @@
 <?php
-// File: app/Models/User.php
+
 namespace App\Models;
 
-// use statements yang sudah ada
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-// use statement tambahan
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log; // <-- TAMBAHAN untuk Log::error / Log::warning
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary; // <-- TAMBAHAN untuk Cloudinary::secureUrl
-use Filament\Panel;
-use Filament\Models\Contracts\FilamentUser;
-
-class User extends Authenticatable implements FilamentUser
+/**
+ * @property string|null $role
+ */
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'profile_photo_public_id',
+        'role',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
-        'profile_photo_public_id',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
-
-    protected $appends = [
-        'profile_photo_url',
-        'initials',
-    ];
-
-    // --- Relasi ---
-    public function roles(): BelongsToMany
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->belongsToMany(Role::class, 'role_user');
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 
-    public function pesanan(): HasMany
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
     {
-        return $this->hasMany(Pesanan::class, 'user_id');
+        return $this->getKey();
     }
-    // --- Akhir Relasi ---
-    public function keranjangItems(): HasMany
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
     {
-        return $this->hasMany(KeranjangItem::class);
+        return [
+            'role' => $this->role
+        ];
     }
 
-    // --- Accessor URL Foto Profil ---
-    public function getProfilePhotoUrlAttribute(): string
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
     {
-        if ($this->profile_photo_public_id) {
-            try {
-                // --- PERUBAHAN DI SINI: Gunakan Facade Cloudinary ---
-                return Cloudinary::secureUrl($this->profile_photo_public_id, [
-                    'transformation' => [
-                        ['width' => 200, 'height' => 200, 'crop' => 'fill', 'gravity' => 'face'],
-                        ['radius' => 'max'],
-                        ['fetch_format' => 'auto', 'quality' => 'auto']
-                    ]
-                ]);
-            } catch (\Exception $e) {
-                // Gunakan Log Facade yang sudah di-import
-                Log::error("Cloudinary URL generation failed for user {$this->id}: " . $e->getMessage());
-                return 'https://via.placeholder.com/200?text=Error';
-            }
-        }
-        // Fallback ke ui-avatars
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=FFFFFF&background=0D8ABC&size=200&bold=true';
+        return $this->role === 'admin';
     }
-    // --- Akhir Accessor URL Foto Profil ---
 
-
-    // --- Accessor Inisial Nama ---
-    public function getInitialsAttribute(): string
+    /**
+     * Check if user is regular user
+     */
+    public function isUser(): bool
     {
-        $words = explode(' ', trim($this->name ?? ''));
-        $initials = '';
-        if (isset($words[0]) && !empty($words[0])) {
-            $initials .= Str::upper(substr($words[0], 0, 1));
-        }
-        if (count($words) >= 2 && isset($words[count($words) - 1]) && !empty($words[count($words) - 1])) {
-            $initials .= Str::upper(substr($words[count($words) - 1], 0, 1));
-        } elseif (strlen($initials) === 1 && isset($words[0]) && strlen($words[0]) > 1) {
-            $initials .= Str::upper(substr($words[0], 1, 1));
-        }
-        return $initials ?: '??';
+        return $this->role === 'user';
     }
-    // --- Akhir Accessor Inisial Nama ---
 
-
-    // --- Method hasRole ---
-    public function hasRole(string $roleSlug): bool
+    /**
+     * Get the user's profile.
+     */
+    public function profile()
     {
-        return $this->roles()->where('slug', $roleSlug)->exists();
+        return $this->hasOne(UserProfile::class);
     }
-    // --- Akhir Method hasRole ---
 
-    // --- Method untuk akses Filament ---
-    public function canAccessPanel(Panel $panel): bool
+    /**
+     * Get the user's addresses.
+     */
+    public function addresses()
     {
-
-        return str_ends_with($this->email, '@gmail.com') && $this->hasVerifiedEmail();
+        return $this->hasMany(Address::class);
     }
-    // --- Akhir Method untuk akses Filament ---
+
+    /**
+     * Get the user's orders.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
