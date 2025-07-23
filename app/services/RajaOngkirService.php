@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Province;
 use App\Models\Regency;
 
-/**
- * @property string $name
- */
 class RajaOngkirService
 {
     private $apiKey;
