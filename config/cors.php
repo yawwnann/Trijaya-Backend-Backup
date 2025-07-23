@@ -24,7 +24,7 @@ return [
     | **INI YANG PALING PENTING.** '*' mengizinkan semua (TIDAK AMAN!).
     | Gunakan URL frontend spesifik, ambil dari .env.
     */
-    'allowed_origins' => ['https://trijaya-backend-backup-production.up.railway.app', 'http://localhost:5173'], // Fallback ke port React umum
+    'allowed_origins' => ['https://triagung-frontend.vercel.app/', 'http://localhost:5173'], // Fallback ke port React umum
 
     /*
     |--------------------------------------------------------------------------
