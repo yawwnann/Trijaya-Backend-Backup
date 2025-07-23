@@ -12,7 +12,7 @@ class RajaOngkirService
 {
     private $apiKey;
     private $baseUrl;
-    private $originCityId; // ID kota asal (toko Anda)
+    private $originCityId;
 
     public function __construct()
     {
