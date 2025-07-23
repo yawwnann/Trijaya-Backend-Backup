@@ -40,6 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'api' => [
+            'driver' => 'token', // atau 'jwt' jika pakai tymon/jwt-auth
+            'provider' => 'users',
+            'hash' => false,
+        ],
     ],
 
     /*
