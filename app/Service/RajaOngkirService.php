@@ -12,7 +12,7 @@ class RajaOngkirService
 {
     private $apiKey;
     private $baseUrl;
-    private $originCityId;
+    private $originCityId; // ID kota asal (toko Anda)
 
     public function __construct()
     {
@@ -21,7 +21,9 @@ class RajaOngkirService
         $this->originCityId = config('services.rajaongkir.origin_city_id', '419'); // Default: Kulon Progo
     }
 
-
+    /**
+     * Mapping ID wilayah lokal ke Raja Ongkir
+     */
     private function getRajaOngkirMapping()
     {
         return [
