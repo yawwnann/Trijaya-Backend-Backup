@@ -2,65 +2,16 @@
 // config/cors.php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | CORS Paths
-    |--------------------------------------------------------------------------
-    */
-    'paths' => ['api/*', 'sanctum/csrf-cookie'], // Sesuaikan path API Anda
-
-    /*
-    |--------------------------------------------------------------------------
-    | Allowed Methods
-    |--------------------------------------------------------------------------
-    */
-    'allowed_methods' => ['*'], // Izinkan semua method (GET, POST, PUT, dll.)
-
-    /*
-    |--------------------------------------------------------------------------
-    | Allowed Origins
-    |--------------------------------------------------------------------------
-    | **INI YANG PALING PENTING.** '*' mengizinkan semua (TIDAK AMAN!).
-    | Gunakan URL frontend spesifik, ambil dari .env.
-    */
-    'allowed_origins' => ['https://triagung-frontend.vercel.app/', 'http://localhost:5173'], // Fallback ke port React umum
-
-    /*
-    |--------------------------------------------------------------------------
-    | Allowed Origins Patterns
-    |--------------------------------------------------------------------------
-    */
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'livewire/upload-file'],
+    'allowed_methods' => ['*'],
+    'allowed_origins' => [
+        'https://triagung-frontend.vercel.app', // Tambahkan domain frontend Anda di sini!
+        'http://localhost:5173', // Untuk development lokal
+    ],
     'allowed_origins_patterns' => [],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Allowed Headers
-    |--------------------------------------------------------------------------
-    */
-    'allowed_headers' => ['*'], // Izinkan semua header standar & custom
-
-    /*
-    |--------------------------------------------------------------------------
-    | Exposed Headers
-    |--------------------------------------------------------------------------
-    */
+    'allowed_headers' => ['*'],
     'exposed_headers' => [],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Max Age
-    |--------------------------------------------------------------------------
-    */
-    'max_age' => 0, // Cache preflight request (detik)
-
-    /*
-    |--------------------------------------------------------------------------
-    | Supports Credentials
-    |--------------------------------------------------------------------------
-    | Set true jika frontend perlu kirim/terima cookies/session/token Auth.
-    | Jika true, allowed_origins TIDAK BOLEH '*'.
-    */
-    'supports_credentials' => true, // Set true jika pakai Sanctum SPA, dll.
+    'max_age' => 0,
+    'supports_credentials' => true,
 
 ];
