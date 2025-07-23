@@ -41,9 +41,8 @@ return [
             'provider' => 'users',
         ],
         'api' => [
-            'driver' => 'token', // atau 'jwt' jika pakai tymon/jwt-auth
+            'driver' => 'jwt', // Ganti ke jwt agar pakai tymon/jwt-auth
             'provider' => 'users',
-            'hash' => false,
         ],
     ],
 
