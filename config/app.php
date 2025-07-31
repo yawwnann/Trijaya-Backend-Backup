@@ -142,6 +142,7 @@ return [
         App\Providers\Filament\AdminPanelProvider::class, // <-- Provider Panel Filament Anda
         App\Providers\LivewireOverrideServiceProvider::class,
 
+
     ])->toArray(),
 
 
