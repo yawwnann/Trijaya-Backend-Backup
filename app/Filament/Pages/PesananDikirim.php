@@ -16,7 +16,7 @@ class PesananDikirim extends Page implements HasTable
     protected static ?string $navigationGroup = 'Manajemen Pesanan';
     protected static ?string $navigationLabel = 'Dikirim';
     protected static ?string $title = 'Pesanan Dikirim';
-    protected static string $view = 'filament.pages.pesanan-dikirim';
+    protected static string $view = 'filament.pages.table-page';
 
     protected function getTableQuery()
     {

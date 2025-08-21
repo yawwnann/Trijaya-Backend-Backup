@@ -16,7 +16,7 @@ class PesananDiproses extends Page implements HasTable
     protected static ?string $navigationGroup = 'Manajemen Pesanan';
     protected static ?string $navigationLabel = 'Diproses';
     protected static ?string $title = 'Pesanan Diproses';
-    protected static string $view = 'filament.pages.pesanan-diproses';
+    protected static string $view = 'filament.pages.table-page';
 
     protected function getTableQuery()
     {

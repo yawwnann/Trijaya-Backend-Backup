@@ -16,7 +16,7 @@ class PesananBerhasil extends Page implements HasTable
     protected static ?string $navigationGroup = 'Manajemen Pesanan';
     protected static ?string $navigationLabel = 'Berhasil';
     protected static ?string $title = 'Pesanan Berhasil';
-    protected static string $view = 'filament.pages.pesanan-berhasil';
+    protected static string $view = 'filament.pages.table-page';
 
     protected function getTableQuery()
     {
@@ -34,11 +34,11 @@ class PesananBerhasil extends Page implements HasTable
                 ->badge()
                 ->color(fn($state) => match ($state) {
                     'pending' => 'warning',
-                    'processing' => 'primary',   // Ganti 'orange' jadi 'primary'
+                    'processing' => 'primary',
                     'shipped' => 'info',
                     'delivered' => 'success',
                     'cancelled' => 'danger',
-                    'completed' => 'success',    // Ganti 'emerald' jadi 'success'
+                    'completed' => 'success',
                     default => 'secondary',
                 })
                 ->formatStateUsing(fn(string $state): string => match ($state) {
