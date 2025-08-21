@@ -65,7 +65,7 @@ class UserProfileController extends Controller
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string',
             'avatar' => 'nullable|string|url',
-            'gender' => 'nullable|in:male,female,other',
+            'gender' => 'nullable|in:Laki-laki,Perempuan',
             'birth_date' => 'nullable|date',
         ]);
 
