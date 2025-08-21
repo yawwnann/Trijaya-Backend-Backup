@@ -9,6 +9,7 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use App\Models\UserProfile;
+use Carbon\Carbon;
 
 class UserProfileController extends Controller
 {
@@ -20,7 +21,6 @@ class UserProfileController extends Controller
             $profile = $user->profile;
 
             if (!$profile) {
-                // Return empty profile data instead of 404
                 return response()->json([
                     'phone' => null,
                     'bio' => null,
@@ -30,7 +30,24 @@ class UserProfileController extends Controller
                 ]);
             }
 
-            return response()->json($profile);
+            // Sanitize output and avoid casting exceptions
+            $rawBirthDate = $profile->getRawOriginal('birth_date');
+            $birthDate = null;
+            if (!empty($rawBirthDate)) {
+                try {
+                    $birthDate = Carbon::parse($rawBirthDate)->toDateString();
+                } catch (\Throwable $e) {
+                    $birthDate = null;
+                }
+            }
+
+            return response()->json([
+                'phone' => $profile->phone,
+                'bio' => $profile->bio,
+                'avatar' => $profile->avatar,
+                'gender' => $profile->gender,
+                'birth_date' => $birthDate,
+            ]);
         } catch (TokenExpiredException | TokenInvalidException | JWTException $e) {
             return response()->json(['error' => 'Authentication failed'], 401);
         } catch (\Throwable $e) {

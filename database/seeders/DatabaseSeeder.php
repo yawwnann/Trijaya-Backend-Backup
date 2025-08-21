@@ -12,6 +12,7 @@ use Database\Seeders\UserSeeder; // Asumsi Anda punya UserSeeder untuk admin
 use Database\Seeders\KategoriIkanSeeder;
 use Database\Seeders\IkanSeeder;
 use Database\Seeders\PesananSeeder;
+use Database\Seeders\WilayahSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,7 +24,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
                 // RoleSeeder::class,          // 1. Buat Roles
-            AdminUserSeeder::class
+                // AdminUserSeeder::class,
+            WilayahSeeder::class,
             // UserSeeder::class,          // 2. Buat User Admin (assign role 'admin') <-- PASTIKAN INI ADA
             // KategoriIkanSeeder::class,
             // IkanSeeder::class,
