@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use App\Models\UserProfile;
 
 class UserProfileController extends Controller
@@ -28,8 +31,11 @@ class UserProfileController extends Controller
             }
 
             return response()->json($profile);
-        } catch (\Exception $e) {
+        } catch (TokenExpiredException | TokenInvalidException | JWTException $e) {
             return response()->json(['error' => 'Authentication failed'], 401);
+        } catch (\Throwable $e) {
+            // Do not misreport non-auth errors as 401
+            return response()->json(['message' => 'Failed to fetch profile'], 500);
         }
     }
 

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
+use Illuminate\Support\Facades\Schema;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -201,7 +202,14 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return Order::where('status', 'pending')->count() ?: null;
+        if (!Schema::hasTable('orders')) {
+            return null;
+        }
+        try {
+            return Order::where('status', 'pending')->count() ?: null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public static function getNavigationBadgeColor(): ?string
