@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-                // RoleSeeder::class,          // 1. Buat Roles
-                // AdminUserSeeder::class,
+                // RoleSeeder::class,          // 1. Buat Roles (opsional)
+            AdminUserSeeder::class,
             WilayahSeeder::class,
-            // UserSeeder::class,          // 2. Buat User Admin (assign role 'admin') <-- PASTIKAN INI ADA
+            // UserSeeder::class,          // 2. Buat User Admin (assign role 'admin')
             // KategoriIkanSeeder::class,
             // IkanSeeder::class,
             // PesananSeeder::class,
