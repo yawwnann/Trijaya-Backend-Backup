@@ -239,6 +239,8 @@ class OrderController extends Controller
         if ($order->status === 'failed') {
             $order->status = 'processing';
             $order->payment_status = 'pending'; // Reset payment status
+            // Generate order number baru untuk Midtrans (timestamp + random)
+            $order->order_number = 'ORDER-' . time() . '-' . strtoupper(Str::random(4));
         } else {
             $order->status = 'processing';
             $order->payment_status = 'pending'; // Reset payment status
@@ -370,10 +372,10 @@ class OrderController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
 
-        // Cari order yang akan diupdate (bisa pending atau processing)
+        // Cari order yang akan diupdate (bisa pending, processing, atau failed)
         $order = Order::where('id', $orderId)
             ->where('user_id', $user->id)
-            ->whereIn('status', ['pending', 'processing'])
+            ->whereIn('status', ['pending', 'processing', 'failed'])
             ->first();
 
         if (!$order) {
