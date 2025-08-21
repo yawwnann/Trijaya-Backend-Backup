@@ -23,7 +23,7 @@ class OrderController extends Controller
     public function myOrders(Request $request)
     {
         $user = JWTAuth::parseToken()->authenticate();
-        $orders = Order::with('items')->where('user_id', $user->id)->where('status', '!=', 'pending')->orderByDesc('created_at')->get();
+        $orders = Order::with('items.produk')->where('user_id', $user->id)->where('status', '!=', 'pending')->orderByDesc('created_at')->get();
         return response()->json($orders);
     }
 
@@ -36,7 +36,7 @@ class OrderController extends Controller
     public function cart(Request $request)
     {
         $user = JWTAuth::parseToken()->authenticate();
-        $cart = Order::with('items')
+        $cart = Order::with('items.produk')
             ->where('user_id', $user->id)
             ->where('status', 'pending')
             ->first();
@@ -105,7 +105,7 @@ class OrderController extends Controller
         $cart->grand_total = $total + $cart->shipping_cost + $cart->tax - $cart->discount;
         $cart->save();
 
-        return response()->json($cart->load('items'));
+        return response()->json($cart->load('items.produk'));
     }
 
     /**
@@ -138,7 +138,8 @@ class OrderController extends Controller
         $order->grand_total = $total + $order->shipping_cost + $order->tax - $order->discount;
         $order->save();
 
-        return response()->json($item->fresh(['order.items']));
+        return response()->json($item->fresh(['order.items.produk']))
+        ;
     }
 
     /**
@@ -240,7 +241,7 @@ class OrderController extends Controller
         $order->save();
 
         return response()->json([
-            'order' => $order->load('items'),
+            'order' => $order->load('items.produk'),
             'snap_token' => $snapToken,
         ]);
     }
@@ -255,7 +256,7 @@ class OrderController extends Controller
     public function orderDetail(Request $request, $orderId)
     {
         $user = JWTAuth::parseToken()->authenticate();
-        $order = Order::with('items')
+        $order = Order::with('items.produk')
             ->where('id', $orderId)
             ->where('user_id', $user->id)
             ->first();

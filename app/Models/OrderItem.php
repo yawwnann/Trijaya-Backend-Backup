@@ -26,10 +26,11 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
-    // Relasi ke produk dihapus karena foreign key constraint sudah dihapus
-    // Data produk disimpan sebagai snapshot di product_name dan price
-    // public function produk(): BelongsTo
-    // {
-    //     return $this->belongsTo(Produk::class, 'product_id');
-    // }
+    /**
+     * Relasi opsional ke produk sumber. Tidak membutuhkan FK constraint.
+     */
+    public function produk(): BelongsTo
+    {
+        return $this->belongsTo(Produk::class, 'product_id');
+    }
 }
