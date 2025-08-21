@@ -19,21 +19,7 @@ class OrderObserver
      */
     public function updated(Order $order): void
     {
-        // Auto-update status menjadi cancelled jika payment_status = failed
-        if ($order->payment_status === 'failed' && $order->status !== 'cancelled') {
-            $order->updateQuietly(['status' => 'cancelled']);
-        }
-    }
-
-    /**
-     * Handle the Order "updating" event.
-     */
-    public function updating(Order $order): void
-    {
-        // Pastikan status tidak bisa diubah jika payment_status = failed
-        if ($order->payment_status === 'failed' && $order->isDirty('status')) {
-            $order->status = 'cancelled';
-        }
+        //
     }
 
     /**

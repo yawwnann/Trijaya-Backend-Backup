@@ -71,8 +71,7 @@ class PesananBerhasil extends Page implements HasTable
     protected function getTableActions(): array
     {
         return [
-            Tables\Actions\ViewAction::make(),
-            Tables\Actions\EditAction::make(),
+
         ];
     }
 }
