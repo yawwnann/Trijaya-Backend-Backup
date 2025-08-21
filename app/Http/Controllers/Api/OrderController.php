@@ -23,7 +23,12 @@ class OrderController extends Controller
     public function myOrders(Request $request)
     {
         $user = JWTAuth::parseToken()->authenticate();
-        $orders = Order::with('items.produk')->where('user_id', $user->id)->where('status', '!=', 'pending')->orderByDesc('created_at')->get();
+        $orders = Order::with('items.produk')
+            ->where('user_id', $user->id)
+            ->whereNotIn('status', ['pending', 'failed']) // Exclude pending and failed
+            ->where('payment_status', '!=', 'failed') // Exclude failed payments
+            ->orderByDesc('created_at')
+            ->get();
         return response()->json($orders);
     }
 
@@ -38,7 +43,10 @@ class OrderController extends Controller
         $user = JWTAuth::parseToken()->authenticate();
         $cart = Order::with('items.produk')
             ->where('user_id', $user->id)
-            ->where('status', 'pending')
+            ->where(function ($query) {
+                $query->whereIn('status', ['pending', 'processing', 'failed'])
+                    ->orWhere('payment_status', 'failed');
+            })
             ->first();
 
         return response()->json($cart);
@@ -119,7 +127,11 @@ class OrderController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
         $item = OrderItem::whereHas('order', function ($q) use ($user) {
-            $q->where('user_id', $user->id)->where('status', 'pending');
+            $q->where('user_id', $user->id)
+                ->where(function ($subQuery) {
+                    $subQuery->whereIn('status', ['pending', 'processing', 'failed'])
+                        ->orWhere('payment_status', 'failed');
+                });
         })->findOrFail($itemId);
 
         // Validate request
@@ -153,7 +165,11 @@ class OrderController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
         $item = OrderItem::whereHas('order', function ($q) use ($user) {
-            $q->where('user_id', $user->id)->where('status', 'pending');
+            $q->where('user_id', $user->id)
+                ->where(function ($subQuery) {
+                    $subQuery->whereIn('status', ['pending', 'processing', 'failed'])
+                        ->orWhere('payment_status', 'failed');
+                });
         })->findOrFail($itemId);
         $order = $item->order;
         $item->delete();
@@ -197,9 +213,12 @@ class OrderController extends Controller
             return response()->json(['error' => 'Alamat tidak valid.'], 422);
         }
 
-        // Ambil order pending milik user
+        // Ambil order pending, processing, atau dengan status failed milik user
         $order = Order::where('user_id', $user->id)
-            ->where('status', 'pending')
+            ->where(function ($query) {
+                $query->whereIn('status', ['pending', 'processing', 'failed'])
+                    ->orWhere('payment_status', 'failed');
+            })
             ->orderByDesc('created_at')
             ->first();
         if (!$order) {
@@ -215,7 +234,16 @@ class OrderController extends Controller
         if (isset($validated['notes'])) {
             $order->notes = $validated['notes'];
         }
-        $order->status = 'processing';
+
+        // Reset status jika sebelumnya failed
+        if ($order->status === 'failed') {
+            $order->status = 'processing';
+            $order->payment_status = 'pending'; // Reset payment status
+        } else {
+            $order->status = 'processing';
+            $order->payment_status = 'pending'; // Reset payment status
+        }
+
         $order->created_at = now();
         $order->save();
 
@@ -243,6 +271,7 @@ class OrderController extends Controller
         return response()->json([
             'order' => $order->load('items.produk'),
             'snap_token' => $snapToken,
+            'order_id' => $order->id, // Tambahkan order_id untuk update payment status
         ]);
     }
 
@@ -328,5 +357,45 @@ class OrderController extends Controller
             'message' => 'Nomor resi berhasil ditambahkan',
             'order' => $order
         ]);
+    }
+
+    /**
+     * Update payment status to failed when user cancel payment
+     * 
+     * @param Request $request
+     * @param int $orderId
+     * @return JsonResponse
+     */
+    public function updatePaymentFailed(Request $request, $orderId)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        // Cari order yang akan diupdate (bisa pending atau processing)
+        $order = Order::where('id', $orderId)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Pesanan tidak ditemukan atau tidak dapat diupdate'], 404);
+        }
+
+        try {
+            // Update payment status menjadi failed dan status menjadi failed (agar konsisten)
+            $order->payment_status = 'failed';
+            $order->status = 'failed'; // Status otomatis menjadi failed
+            $order->save();
+
+            return response()->json([
+                'message' => 'Status pembayaran berhasil diupdate menjadi gagal',
+                'order' => $order->fresh()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Gagal mengupdate status pembayaran',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

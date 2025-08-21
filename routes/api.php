@@ -51,6 +51,9 @@ Route::post('/orders/{orderId}/confirm-received', [OrderController::class, 'conf
 // Update resi pengiriman
 Route::post('/orders/{orderId}/update-resi', [OrderController::class, 'updateResi']);
 
+// Update payment status to failed
+Route::post('/orders/{orderId}/payment-failed', [OrderController::class, 'updatePaymentFailed']);
+
 // CORS Test Route
 Route::get('cors-test', function () {
     return response()->json([
