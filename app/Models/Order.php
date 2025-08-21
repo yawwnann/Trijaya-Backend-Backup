@@ -16,6 +16,7 @@ class Order extends Model
         'shipping_cost',
         'shipping_service',
         'shipping_courier',
+        'resi', // Tambahkan resi
         'tax',
         'discount',
         'grand_total',

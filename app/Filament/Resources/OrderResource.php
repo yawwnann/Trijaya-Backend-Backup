@@ -80,7 +80,21 @@ class OrderResource extends Resource
                         'cancelled' => 'Dibatalkan',
                         'completed' => 'Selesai',
                     ])
-                    ->required(),
+                    ->required()
+                    ->default('pending')
+                    ->reactive()
+                    ->disabled(fn(callable $get): bool => $get('payment_status') === 'failed')
+                    ->helperText(
+                        fn(callable $get): string =>
+                        $get('payment_status') === 'failed'
+                        ? 'Status tidak dapat diubah karena pembayaran gagal'
+                        : 'Pilih status pesanan'
+                    )
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state === 'shipped') {
+                            $set('resi', '');
+                        }
+                    }),
                 Forms\Components\Select::make('payment_status')
                     ->label('Status Pembayaran')
                     ->options([
@@ -88,11 +102,61 @@ class OrderResource extends Resource
                         'paid' => 'Lunas',
                         'failed' => 'Gagal',
                     ])
-                    ->required(),
+                    ->required()
+                    ->default('pending')
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state === 'failed') {
+                            $set('status', 'cancelled');
+                        }
+                    })
+                    ->helperText(
+                        fn(callable $get): string =>
+                        $get('payment_status') === 'failed'
+                        ? 'Status pesanan otomatis diubah menjadi "Dibatalkan"'
+                        : 'Pilih status pembayaran'
+                    ),
                 Forms\Components\TextInput::make('payment_method')
                     ->label('Metode Pembayaran'),
                 Forms\Components\Textarea::make('notes')
                     ->label('Catatan')
+                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('shipping_courier')
+                    ->label('Kurir Pengiriman')
+                    ->placeholder('Contoh: JNE, SiCepat, TIKI, dll')
+                    ->helperText('Nama kurir pengiriman')
+                    ->required(fn(callable $get): bool => $get('status') === 'shipped')
+                    ->rules([
+                        'required_if:status,shipped',
+                        'nullable'
+                    ])
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        // Jika status bukan shipped, shipping_courier tidak wajib
+                        if ($get('status') !== 'shipped') {
+                            $set('shipping_courier', '');
+                        }
+                    })
+                    ->dehydrated(fn(callable $get): bool => $get('status') === 'shipped')
+                    ->default(''),
+                Forms\Components\TextInput::make('resi')
+                    ->label('Nomor Resi')
+                    ->placeholder('Masukkan nomor resi pengiriman')
+                    ->helperText('Nomor resi untuk melacak paket')
+                    ->required(fn(callable $get): bool => $get('status') === 'shipped')
+                    ->rules([
+                        'required_if:status,shipped',
+                        'nullable'
+                    ])
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        // Jika status bukan shipped, resi tidak wajib
+                        if ($get('status') !== 'shipped') {
+                            $set('resi', '');
+                        }
+                    })
+                    ->dehydrated(fn(callable $get): bool => $get('status') === 'shipped')
+                    ->default('')
                     ->columnSpanFull(),
             ]);
     }
@@ -131,7 +195,13 @@ class OrderResource extends Resource
                         'cancelled' => 'Dibatalkan',
                         'completed' => 'Selesai',
                         default => 'Status Tidak Dikenal',
-                    }),
+                    })
+                    ->description(
+                        fn($record) =>
+                        $record->payment_status === 'failed'
+                        ? 'Status terkunci karena pembayaran gagal'
+                        : null
+                    ),
                 Tables\Columns\TextColumn::make('payment_status')
                     ->label('Pembayaran')
                     ->badge()
@@ -150,6 +220,14 @@ class OrderResource extends Resource
                     ->label('Tanggal')
                     ->date('d M Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('shipping_courier')
+                    ->label('Kurir')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('resi')
+                    ->label('Nomor Resi')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -173,6 +251,24 @@ class OrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('updateResi')
+                    ->label('Update Resi')
+                    ->icon('heroicon-o-truck')
+                    ->color('info')
+                    ->visible(fn($record) => $record->status === 'processing')
+                    ->form([
+                        Forms\Components\TextInput::make('resi')
+                            ->label('Nomor Resi')
+                            ->required()
+                            ->placeholder('Masukkan nomor resi pengiriman'),
+                    ])
+                    ->action(function (Order $record, array $data) {
+                        $record->status = 'shipped';
+                        $record->resi = $data['resi'];
+                        $record->save();
+
+                        // Kirim notifikasi atau log jika diperlukan
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

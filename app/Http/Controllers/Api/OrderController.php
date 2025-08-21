@@ -265,4 +265,68 @@ class OrderController extends Controller
         }
         return response()->json($order);
     }
+
+    /**
+     * Konfirmasi pesanan diterima
+     * 
+     * @param Request $request
+     * @param int $orderId
+     * @return JsonResponse
+     */
+    public function confirmOrderReceived(Request $request, $orderId)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        $order = Order::where('id', $orderId)
+            ->where('user_id', $user->id)
+            ->where('status', 'shipped')
+            ->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Pesanan tidak ditemukan atau tidak dapat dikonfirmasi'], 404);
+        }
+
+        // Ubah status pesanan menjadi 'completed'
+        $order->status = 'completed';
+        $order->save();
+
+        return response()->json([
+            'message' => 'Pesanan berhasil dikonfirmasi diterima',
+            'order' => $order
+        ]);
+    }
+
+    /**
+     * Update resi pengiriman
+     * 
+     * @param Request $request
+     * @param int $orderId
+     * @return JsonResponse
+     */
+    public function updateResi(Request $request, $orderId)
+    {
+        // Validasi input
+        $validated = $request->validate([
+            'resi' => 'required|string|max:50',
+        ]);
+
+        // Cari pesanan yang akan diupdate
+        $order = Order::where('id', $orderId)
+            ->where('status', 'processing') // Pastikan pesanan sudah diproses
+            ->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Pesanan tidak ditemukan atau tidak dapat diupdate'], 404);
+        }
+
+        // Update status menjadi shipped dan tambahkan resi
+        $order->status = 'shipped';
+        $order->resi = $validated['resi'];
+        $order->save();
+
+        return response()->json([
+            'message' => 'Nomor resi berhasil ditambahkan',
+            'order' => $order
+        ]);
+    }
 }

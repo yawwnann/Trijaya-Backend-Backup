@@ -45,6 +45,12 @@ Route::get('districts', [WilayahController::class, 'districts']);
 // Midtrans Webhook Notification
 Route::post('midtrans/notification', [WebhookController::class, 'handle']);
 
+// Konfirmasi pesanan diterima
+Route::post('/orders/{orderId}/confirm-received', [OrderController::class, 'confirmOrderReceived']);
+
+// Update resi pengiriman
+Route::post('/orders/{orderId}/update-resi', [OrderController::class, 'updateResi']);
+
 // CORS Test Route
 Route::get('cors-test', function () {
     return response()->json([
