@@ -7,6 +7,7 @@ return [
     'allowed_origins' => [
         'https://triagung-frontend.vercel.app', // Tambahkan domain frontend Anda di sini!
         'http://localhost:5173', // Untuk development lokal
+        'https://www.trijaya-agung.com'
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
